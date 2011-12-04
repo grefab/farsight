@@ -92,8 +92,10 @@ def ensure_trailing_slash path
   path.end_with?('/') ? path : path + '/'
 end
 
+DEFINE_BASE_FS_PATH = '/Users/gregor/'
+
 def to_fs_path relativePath
-  '/Users/gregor/' + relativePath
+  DEFINE_BASE_FS_PATH + relativePath
 end
 
 def find_files(relativePath)
@@ -146,7 +148,7 @@ get '/dl/*' do
 end
 
 # playground
-get '/streem' do
+get '/barney' do
   stream do |out|
     out << "It's gonna be legen -\n"
     sleep 0.5
@@ -155,8 +157,3 @@ get '/streem' do
     out << "- dary!\n"
   end
 end
-
-get '/xxx' do
-  send_file('/Users/gregor/Desktop/video.avi')
-end
-
