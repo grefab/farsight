@@ -1,0 +1,24 @@
+!!!
+%html
+  %head
+    %title loc4te.de
+    %link(rel="stylesheet" href="css/reset.css")
+    %link(rel="stylesheet" href="css/styles.css")
+
+    %script(type="text/javascript" src="js/jquery-1.4.2.min.js")
+    %script(type="text/javascript" src="js/jquery.tmpl.js")
+
+    %script(type="text/javascript" src="http://www.openlayers.org/api/OpenLayers.js")
+    %script(type="text/javascript" src="http://www.openstreetmap.org/openlayers/OpenStreetMap.js")
+
+    %script(type="text/javascript" src="js/osm.js")
+    %script(type="text/javascript" src="js/loc4te.js")
+  
+    %script
+      $(document).ready( function() { var loc4te = new Loc4te(); loc4te.init(); loc4te.run_recent_postings(); } );
+
+  %body
+    #wrapper
+      #content
+        #map{:style => "width: 100%; height: 100%;"}
+

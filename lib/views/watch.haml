@@ -1,0 +1,12 @@
+#page
+  #header
+    %h1
+      play
+  #content
+    %p
+      =basedir
+
+    %video{'width'=>'640', 'height'=>'480', 'controls'=>'controls'}
+      %source{'src'=>'/dl' + basedir}
+      -#%source{'src'=>'rtsp://192.168.178.29:5554/test.3gp'}
+      Your browser does not support HTML5 video. Please consider updating.

@@ -1,0 +1,20 @@
+#page
+  %div{'data-role' => 'header'}
+    %h1
+      farsight
+    %a{:href => '/', 'data-icon'=>'home', 'data-iconpos'=>'notext'}
+      home
+  #content
+    %p
+      =basedir
+
+    %ul{'data-role'=>'listview', 'data-inset'=>'true'}
+      - directories.each do |dir|
+        %li{'data-theme'=>'a'}
+          %a{:href => '/browse' + basedir + dir}
+            #{dir}
+
+      - files.each do |file|
+        %li{'data-theme'=>'b'}
+          %a{:href => '/watch' + basedir + file}
+            #{file}
