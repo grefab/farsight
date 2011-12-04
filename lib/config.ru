@@ -1,4 +1,4 @@
-require 'loc4te'
+require 'farsight'
 require 'rack/offline'
 
 map "/application.manifest" do
