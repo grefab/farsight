@@ -4,8 +4,7 @@ require 'haml'
 require 'uuidtools'
 require 'uri'
 
-# my own modules
-require 'handledata'
+require 'urlfilehandler'
 
 set :server, :thin
 
@@ -48,76 +47,6 @@ before do
   ensure_login
 end
 
-def url_to_path(prefix)
-  # remove prefix
-  path = request.path_info.sub(prefix, '')
-
-  # remove trailing slash if present
-  path = path.reverse.sub('/', '').reverse if path.end_with?('/')
-
-  # decode, i.e. replace %20 by space and so on.
-  path = URI.decode path
-
-  path
-end
-
-def filter_base_names(filelist)
-  filelist.map { |a| File.basename(a) }
-end
-
-def filer_filetypes(filelist)
-  filelist.find_all { |f| File.extname(f) == '.mp4' }
-end
-
-def extract_directories_and_files(filelist)
-  # find files and directories
-  subdirectories = []
-  files = []
-  filelist.each do |f|
-    subdirectories += [f] if File.directory?(f)
-    files += [f] if File.file?(f)
-  end
-
-  # we are only interested in the base names
-  subdirectories = filter_base_names subdirectories
-  files = filter_base_names files
-
-  # and only in mp4 files
-  filtered_files = filer_filetypes files
-
-  return subdirectories, filtered_files
-end
-
-def ensure_trailing_slash path
-  path.end_with?('/') ? path : path + '/'
-end
-
-DEFINE_BASE_FS_PATH = '/Users/gregor/'
-
-def to_fs_path relativePath
-  DEFINE_BASE_FS_PATH + relativePath
-end
-
-def find_files(relativePath)
-  path = ensure_trailing_slash relativePath
-  path = to_fs_path path
-
-  all_files = Dir[path + '*']
-
-  return all_files
-end
-
-def extract_fileinfo_from_path path
-  all_files = find_files path
-  subdirectories, files = extract_directories_and_files all_files
-  basedir = ensure_trailing_slash path
-
-  return basedir, subdirectories, files
-end
-
-def extract_fileinfo_from_url(prefix)
-  extract_fileinfo_from_path(url_to_path(prefix))
-end
 
 
 #
@@ -131,20 +60,20 @@ end
 
 # browse files
 get '/browse/*' do
-  basedir, directories, files = extract_fileinfo_from_url('/browse')
+  basedir, directories, files = UrlFileHandler.extract_fileinfo_from_url(request.path_info, '/browse')
 
   haml :index, :locals => {:basedir => basedir, :directories => directories, :files => files}
 end
 
 # watch files
 get '/watch/*' do
-  basedir, directories, files = extract_fileinfo_from_url('/watch')
+  basedir, directories, files = UrlFileHandler.extract_fileinfo_from_url(request.path_info, '/watch')
 
   haml :watch, :locals => {:basedir => basedir, :directories => directories, :files => files}
 end
 
 get '/dl/*' do
-  send_file(to_fs_path(url_to_path('/dl')))
+  send_file(UrlFileHandler.get_fs_path_from_url(request.path_info, '/dl'))
 end
 
 # playground
