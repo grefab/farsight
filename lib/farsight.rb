@@ -36,38 +36,11 @@ def login
 end
 
 def ensure_login
-  if not loggedin? then 
+  if not loggedin? then
     login
   else
     puts "request from " + session[:userid]
   end
-end
-
-
-def handle_path path
-  path = URI.decode path 
-  
-  # begins with a slash, ends with a slash!
-  basedir = path.end_with?('/') ? path : path + '/'
-  all_files = Dir[basedir + '*']
-
-  # find files and directories
-  directories = []
-  files = []
-  all_files.each do |f|
-    directories += [f] if File.directory?(f)
-    files += [f] if File.file?(f)
-  end
-
-  # we are only interested in the base names
-  directories = directories.map { |a| File.basename(a) }
-  files = files.map { |a| File.basename(a) }
-
-  # and only in mp4 files
-  filtered_files = files.find_all { |f| File.extname(f) == '.mp4' }
-  
-  # return triple
-  return basedir, directories, filtered_files
 end
 
 before do
@@ -75,6 +48,74 @@ before do
   ensure_login
 end
 
+def url_to_path(prefix)
+  # remove prefix
+  path = request.path_info.sub(prefix, '')
+
+  # remove trailing slash if present
+  path = path.reverse.sub('/', '').reverse if path.end_with?('/')
+
+  # decode, i.e. replace %20 by space and so on.
+  path = URI.decode path
+
+  path
+end
+
+def filter_base_names(filelist)
+  filelist.map { |a| File.basename(a) }
+end
+
+def filer_filetypes(filelist)
+  filelist.find_all { |f| File.extname(f) == '.mp4' }
+end
+
+def extract_directories_and_files(filelist)
+  # find files and directories
+  subdirectories = []
+  files = []
+  filelist.each do |f|
+    subdirectories += [f] if File.directory?(f)
+    files += [f] if File.file?(f)
+  end
+
+  # we are only interested in the base names
+  subdirectories = filter_base_names subdirectories
+  files = filter_base_names files
+
+  # and only in mp4 files
+  filtered_files = filer_filetypes files
+
+  return subdirectories, filtered_files
+end
+
+def ensure_trailing_slash path
+  path.end_with?('/') ? path : path + '/'
+end
+
+def to_fs_path relativePath
+  '/Users/gregor/' + relativePath
+end
+
+def find_files(relativePath)
+  path = ensure_trailing_slash relativePath
+  path = to_fs_path path
+
+  all_files = Dir[path + '*']
+
+  return all_files
+end
+
+def extract_fileinfo_from_path path
+  all_files = find_files path
+  subdirectories, files = extract_directories_and_files all_files
+  basedir = ensure_trailing_slash path
+
+  return basedir, subdirectories, files
+end
+
+def extract_fileinfo_from_url(prefix)
+  extract_fileinfo_from_path(url_to_path(prefix))
+end
 
 
 #
@@ -88,26 +129,20 @@ end
 
 # browse files
 get '/browse/*' do
-  path = request.path_info.sub('/browse', '')
-  basedir, directories, files = handle_path(path)
- 
+  basedir, directories, files = extract_fileinfo_from_url('/browse')
+
   haml :index, :locals => {:basedir => basedir, :directories => directories, :files => files}
 end
 
 # watch files
 get '/watch/*' do
-  path = request.path_info.sub('/watch', '')
-  basedir, directories, files = handle_path(path)
- 
+  basedir, directories, files = extract_fileinfo_from_url('/watch')
+
   haml :watch, :locals => {:basedir => basedir, :directories => directories, :files => files}
 end
 
 get '/dl/*' do
-  path = request.path_info.sub('/dl', '')
-  path = path.reverse.sub('/', '').reverse if path.end_with?('/')
-  path = URI.decode path 
-
-  send_file(path)
+  send_file(to_fs_path(url_to_path('/dl')))
 end
 
 # playground
